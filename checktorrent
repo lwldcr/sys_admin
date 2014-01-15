@@ -1,0 +1,24 @@
+#!/bin/bash
+# 2014/1/12 lwldcr@gmail.com
+# check ftp server directory
+# if .torrent file found: mv them to rtorrent watch directory
+
+Rtorrent=/home/pi/rtorrent/watch
+FtpUpload=/srv/ftp/pub/upload
+
+if [ ! -d $FtpUpload ]; then
+	echo "No such directory:$FtpUpload"
+	exit 1
+fi
+
+if [ ! -d $Rtorrent ]; then
+	echo "No such directory:$Rtorrent"
+	exit 1
+fi
+
+for t in $FtpUpload/*.torrent
+do
+	mv "$t" $Rtorrent
+done
+
+pgrep rtorrent || rtorrent &
