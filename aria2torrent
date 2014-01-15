@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# bt downloading via aria2
+# 2014/1/12 lwldcr@gmail.com
+
+import os,sys,glob
+import threading, time
+
+DataStore = '/media/Data/'
+TorrentStore = '/home/pi/rtorrent/'
+FtpDir = '/srv/ftp/pub/upload/'
+Working = '/home/pi/rtorrent/work/'
+
+def download(torrent):
+	threadName = threading.currentThread().getName()
+	try:
+		os.chdir(DataStore+"Downloads")
+	except:
+		os.chdir(DataStore)
+
+	if not os.path.isfile(torrent):
+		print "Not a file: %s!" % (torrent)
+		return 0
+	try:
+		os.rename(torrent, Working + basename(torrent))
+        	#print cmd
+	except:
+		pass
+	cmd = 'aria2c --max-upload-limit 50K -T ' + Working + basename(torrent)
+	os.system(cmd)
+
+def collectTorrent():
+	for t in glob.glob(FtpDir + '*.torrent'):
+		try:
+			os.rename(t, TorrentStore +  basename(t))
+		except:
+			pass
+
+
+def main():
+	if not os.path.ismount(DataStore):
+		print "Storage not mounted!"
+		sys.exit(1)
+
+	if not os.path.isdir(TorrentStore):
+		print "Torrent dir:\"%s\" error!" % (TorrentStore)
+		sys.exit(1)
+
+	collectTorrent()
+	tname = TorrentStore + '*.torrent'
+
+	threads = []
+	for torrent in glob.glob(tname):
+	    threads.append(threading.Thread(target=download, args=(torrent,)))
+
+	for t in threads:
+		t.start()
+    	for t in threads:
+        	t.join()
+
+
+
+if __name__ == '__main__':
+	main()
